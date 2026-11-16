@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grand Interdimensional Hotel - Прототип</title>
+    <style>
+        :root {
+            --bg-color: #121216;
+            --panel-bg: #1c1c24;
+            --accent: #ffb703;
+            --text: #e0e0e0;
+            --danger: #ef476f;
+            --success: #06d6a0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            margin: 0;
+            color: var(--accent);
+            font-size: 24px;
+            letter-spacing: 1px;
+        }
+
+        .hud {
+            display: flex;
+            gap: 30px;
+            background: var(--panel-bg);
+            padding: 10px 20px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .hud span {
+            color: var(--accent);
+        }
+
+        .game-container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 20px;
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .panel h2 {
+            font-size: 16px;
+            margin-top: 0;
+            border-bottom: 2px solid #2d2d3d;
+            padding-bottom: 8px;
+            color: var(--accent);
+        }
+
+        /* Очередь гостей */
+        .guest-card {
+            background: #282836;
+            border: 1px solid #3d3d52;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .guest-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .guest-card.selected {
+            border-color: var(--success);
+            box-shadow: 0 0 8px rgba(6, 214, 160, 0.4);
+        }
+
+        .guest-name {
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .guest-pref {
+            font-size: 12px;
+            color: #b0b0c0;
+            margin: 4px 0;
+        }
+
+        .patience-bar {
+            height: 6px;
+            background: #3d3d52;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 6px;
+        }
+
+        .patience-fill {
+            height: 100%;
+            background: var(--success);
+            width: 100%;
+            transition: width 0.1s linear;
+        }
+
+        /* Сетка комнат отеля */
+        .hotel-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .room {
+            background: #22222e;
+            border: 2px dashed #3d3d52;
+            border-radius: 8px;
+            height: 140px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            text-align: center;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .room.empty {
+            justify-content: center;
+            color: #6c6c80;
+            font-size: 13px;
+        }
+
+        .room.empty:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .room.type-dark { border-style: solid; border-color: #4a4e69; background: #181822; }
+        .room.type-nature { border-style: solid; border-color: #2b9348; background: #16221c; }
+        .room.type-tech { border-style: solid; border-color: #0077b6; background: #121c24; }
+
+        .room-title {
+            font-size: 12px;
+            font-weight: bold;
+            color: #aaa;
+        }
+
+        .room-occupant {
+            font-size: 13px;
+            background: rgba(0,0,0,0.4);
+            padding: 4px 8px;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* Кнопки управления строительством */
+        .build-menu {
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        button {
+            background: var(--accent);
+            border: none;
+            color: #121216;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        button:disabled {
+            background: #3d3d52;
+            color: #777;
+            cursor: not-allowed;
+        }
+
+        .log-box {
+            margin-top: 15px;
+            background: #15151b;
+            border-radius: 6px;
+            padding: 8px;
+            font-size: 12px;
+            height: 60px;
+            overflow-y: auto;
+            color: #999;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🏨 Grand Interdimensional Hotel</h1>
+        <div class="hud">
+            <div>Звездные кредиты: <span id="money">150</span> 🪙</div>
+            <div>Репутация: <span id="reputation">100</span> ⭐</div>
+            <div>Гостей заселено: <span id="score">0</span></div>
+        </div>
+    </header>
+
+    <div class="game-container">
+        <!-- Левая колонка: Очередь лифта -->
+        <div class="panel">
+            <h2>Лифт (Очередь гостей)</h2>
+            <div id="elevator-queue">
+                <!-- Сюда динамически добавляются гости -->
+            </div>
+            <div class="log-box" id="log-box">Добро пожаловать в Нулевую точку! Встречайте первых гостей.</div>
+        </div>
+
+        <!-- Правая колонка: Номера отеля -->
+        <div class="panel">
+            <h2>Этажи отеля (Комнаты)</h2>
+            <div class="hotel-grid" id="hotel-grid">
+                <!-- Комнаты генерируются через JS -->
+            </div>
+
+            <div class="build-menu">
+                <h3 style="margin: 5px 0; font-size: 14px; color: var(--accent);">Построить новую комнату (Стоимость: 50 🪙):</h3>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="buildRoom('dark')">Темный номер (Призраки)</button>
+                    <button onclick="buildRoom('nature')">Лесной номер (Энты)</button>
+                    <button onclick="buildRoom('tech')">Техно-номер (Роботы)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Игровое состояние
+        let state = {
+            money: 150,
+            reputation: 100,
+            score: 0,
+            selectedGuestId: null,
+            guests: [],
+            rooms: [
+                { id: 0, type: 'dark', occupant: null },
+                { id: 1, type: 'nature', occupant: null },
+                { id: 2, type: 'empty', occupant: null },
+                { id: 3, type: 'empty', occupant: null },
+                { id: 4, type: 'empty', occupant: null },
+                { id: 5, type: 'empty', occupant: null }
+            ]
+        };
+
+        const guestTypes = [
+            { name: 'Призрак викторианской эпохи', pref: 'dark', prefName: 'Тьма', color: '#4a4e69' },
+            { name: 'Лесной дух (Энт)', pref: 'nature', prefName: 'Природа', color: '#2b9348' },
+            { name: 'Кремниевый робот', pref: 'tech', prefName: 'Технологии', color: '#0077b6' }
+        ];
+
+        let nextGuestId = 1;
+
+        function log(text) {
+            const box = document.getElementById('log-box');
+            box.innerHTML += `<br>> ${text}`;
+            box.scrollTop = box.scrollHeight;
+        }
+
+        // Генерация нового гостя
+        function spawnGuest() {
+            if (state.guests.length >= 4) return; // Ограничение очереди
+            const type = guestTypes[Math.floor(Math.random() * guestTypes.length)];
+            const newGuest = {
+                id: nextGuestId++,
+                name: type.name,
+                pref: type.pref,
+                prefName: type.prefName,
+                patience: 100, // шкала терпения
+                maxPatience: 100
+            };
+            state.guests.push(newGuest);
+            log(`Лифт привез гостя: ${newGuest.name} (хочет: ${newGuest.prefName})`);
+            render();
+        }
+
+        // Выбор гостя кликом
+        function selectGuest(id) {
+            state.selectedGuestId = (state.selectedGuestId === id) ? null : id;
+            render();
+        }
+
+        // Клик по комнате (заселение или постройка)
+        function handleRoomClick(roomId) {
+            const room = state.rooms[roomId];
+
+            // Если комната пустая, ничего не делаем (строительство через кнопки ниже)
+            if (room.type === 'empty') return;
+
+            // Если комната занята, выселяем постояльца досрочно (или оставляем)
+            if (room.occupant) {
+                log(`${room.occupant.name} съехал досрочно.`);
+                room.occupant = null;
+                render();
+                return;
+            }
+
+            // Если выбран гость из очереди, заселяем его
+            if (state.selectedGuestId !== null) {
+                const guestIndex = state.guests.findIndex(g => g.id === state.selectedGuestId);
+                if (guestIndex !== -1) {
+                    const guest = state.guests[guestIndex];
+                    
+                    room.occupant = guest;
+                    state.guests.splice(guestIndex, 1);
+                    state.selectedGuestId = null;
+
+                    // Проверка соответствия климата
+                    if (room.type === guest.pref) {
+                        log(`${guest.name} заселен в идеальный номер! Восторг.`);
+                        state.money += 40;
+                        state.score += 1;
+                    } else {
+                        log(`${guest.name} заселен в неподходящий номер (${room.type} вместо ${guest.pref}). Он недоволен!`);
+                        state.money += 10;
+                        state.reputation -= 5;
+                    }
+                    render();
+                }
+            }
+        }
+
+        // Строительство комнаты
+        function buildRoom(type) {
+            const emptyIndex = state.rooms.findIndex(r => r.type === 'empty');
+            if (emptyIndex === -1) {
+                log('Нет свободных клеток для строительства этажа!');
+                return;
+            }
+            if (state.money < 50) {
+                log('Недостаточно звездных кредитов (нужно 50 🪙)!');
+                return;
+            }
+
+            state.money -= 50;
+            state.rooms[emptyIndex].type = type;
+            log(`Построен новый номер типа: ${type}`);
+            render();
+        }
+
+        // Отрисовка интерфейса
+        function render() {
+            document.getElementById('money').innerText = state.money;
+            document.getElementById('reputation').innerText = state.reputation;
+            document.getElementById('score').innerText = state.score;
+
+            // Рендер лифта
+            const queueEl = document.getElementById('elevator-queue');
+            queueEl.innerHTML = '';
+            if (state.guests.length === 0) {
+                queueEl.innerHTML = '<div style="font-size: 13px; color: #666; text-align: center; padding: 20px;">Лифт пуст... Ожидаем гостей.</div>';
+            } else {
+                state.guests.forEach(guest => {
+                    const isSelected = state.selectedGuestId === guest.id;
+                    const pct = (guest.patience / guest.maxPatience) * 100;
+                    queueEl.innerHTML += `
+                        <div class="guest-card ${isSelected ? 'selected' : ''}" onclick="selectGuest(${guest.id})">
+                            <div class="guest-name">${guest.name}</div>
+                            <div class="guest-pref">Требует: <b>${guest.prefName}</b></div>
+                            <div class="patience-bar">
+                                <div class="patience-fill" style="width: ${pct}%"></div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            // Рендер сетки отеля
+            const gridEl = document.getElementById('hotel-grid');
+            gridEl.innerHTML = '';
+            state.rooms.forEach((room, index) => {
+                let content = '';
+                let typeClass = `type-${room.type}`;
+
+                if (room.type === 'empty') {
+                    content = '<span>Пустой блок</span>';
+                } else if (room.occupant) {
+                    content = `<div class="room-occupant">👤 ${room.occupant.name}</div>`;
+                } else {
+                    content = `<div class="room-title">Номер (${room.type})</div><div style="font-size: 11px; color: #555;">Свободен</div>`;
+                }
+
+                gridEl.innerHTML += `
+                    <div class="room ${typeClass}" onclick="handleRoomClick(${index})">
+                        ${content}
+                    </div>
+                `;
+            });
+        }
+
+        // Игровой цикл (таймер терпения гостей)
+        setInterval(() => {
+            // Уменьшаем терпение гостей в очереди
+            state.guests.forEach(guest => {
+                guest.patience -= 3;
+                if (guest.patience <= 0) {
+                    log(`${guest.name} не дождался заселения и уехал в ярости!`);
+                    state.reputation -= 10;
+                }
+            });
+            // Удаляем уехавших
+            state.guests = state.guests.filter(g => g.patience > 0);
+
+            // Случайный спавн новых гостей каждые несколько секунд
+            if (Math.random() < 0.35 && state.guests.length < 4) {
+                spawnGuest();
+            }
+
+            render();
+        }, 1500);
+
+        // Первый старт
+        spawnGuest();
+        render();
+    </script>
+</body>
+</html>
